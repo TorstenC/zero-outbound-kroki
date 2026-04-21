@@ -1,28 +1,39 @@
-## Usage
+# 🥷 Zero-Outbound Kroki
+
+Ein rein clientseitiger, serverloser Viewer für Diagramme (kompatibel mit dem [Kroki](https://kroki.io/)-URL-Format).
+
+## 🎯 Warum dieses Projekt?
+
+In Unternehmensumgebungen stellen webbasierte Diagramm-Tools oft ein Sicherheitsrisiko dar ("IP-Leakage"), wenn interne Architektur- oder Prozessdiagramme an externe Server (wie `kroki.io` oder PlantUML-Server) gesendet werden, um dort gerendert zu werden.
+
+**Zero-Outbound Kroki löst dieses Problem:**
+
+* **100% Client-Side:** Alles passiert in deinem Browser. Es gibt keine ausgehenden HTTP-Requests an Rendering-Server.
+* **Kroki-Kompatibilität:** Es nutzt denselben komprimierten Base64-Payload wie Kroki, liest diesen aber aus dem URL-Hash (`#`).
+* **Sicher teilbar:** Da der Code komplett im Hash (`#...`) der URL liegt, wird der Diagramm-Code beim Aufrufen der Seite nicht einmal an den Server (z.B. GitHub Pages) übertragen.
+
+## 🏗️ Architektur
+
+Die URL-Struktur orientiert sich an Kroki, verlagert den Payload aber in den Hash:
+`https://<domain>/#/<engine>/<format>/<base64-payload>`
+
+Das Tool liest den Hash, entpackt ihn (Base64 Decode -> Zlib Inflate via `pako`) und übergibt den Klartext an die lokale, im Browser laufende Diagramm-Engine (z.B. Mermaid.js).
+
+## 🚀 Technologie-Stack
+
+* **Build-Tool:** [Vite](https://vitejs.dev/)
+* **UI-Framework:** [SolidJS](https://www.solidjs.com/) (Extrem leichtgewichtig, kein Virtual DOM)
+* **Kompression:** `pako` (Zlib port)
+
+## 🛠️ Lokale Entwicklung
 
 ```bash
-$ npm install # or pnpm install or yarn install
+# Abhängigkeiten installieren
+npm install
+
+# Entwicklungsserver mit Hot-Module-Replacement starten
+npm run dev
+
+# Projekt für die Produktion bauen (Static Files)
+npm run buil
 ```
-
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm run dev`
-
-Runs the app in the development mode.<br>
-Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-Learn more about deploying your application with the [documentations](https://vite.dev/guide/static-deploy.html)
