@@ -1,102 +1,86 @@
-import { createSignal } from 'solid-js'
-import solidLogo from './assets/solid.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+// src/App.jsx
+import { createSignal, onMount, onCleanup } from 'solid-js';
+import { decodePayload } from './core/decoder';
+import { renderMermaid } from './engines/mermaid';
 
 function App() {
-  const [count, setCount] = createSignal(0)
+  const [diagramSource, setDiagramSource] = createSignal('');
+  const [error, setError] = createSignal('');
+  let containerRef;
+
+  const handleHashChange = async () => {
+    // State zurücksetzen
+    setError('');
+    setDiagramSource('');
+    if (containerRef) containerRef.innerHTML = '';
+
+    const hash = window.location.hash.slice(1); // Das '#' am Anfang entfernen
+    if (!hash || hash === '/') return; // Nichts zu tun bei der Startseite
+
+    // Format aufsplitten: /engine/format/payload
+    const parts = hash.split('/').filter(Boolean);
+    if (parts.length < 3) {
+      setError("Ungültiges URL-Format. Erwartet: #/engine/format/payload");
+      return;
+    }
+
+    const [engine, format, payload] = parts;
+
+    try {
+      // 1. Payload entpacken
+      const decodedCode = decodePayload(payload);
+      setDiagramSource(decodedCode); // Zur Kontrolle im UI anzeigen
+
+      // 2. An die richtige Engine weiterleiten
+      if (engine === 'mermaid') {
+         await renderMermaid(decodedCode, containerRef);
+      } else {
+         setError(`Die Engine '${engine}' wird noch nicht unterstützt.`);
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Event-Listener für URL-Änderungen registrieren
+  onMount(() => {
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange(); // Auch beim ersten Laden direkt ausführen
+  });
+
+  onCleanup(() => {
+    window.removeEventListener('hashchange', handleHashChange);
+  });
 
   return (
-    <>
-      <section id="center">
-        <div class="hero">
-          <img src={heroImg} class="base" width="170" height="179" alt="" />
-          <img src={solidLogo} class="framework" alt="Solid logo" />
-          <img src={viteLogo} class="vite" alt="Vite logo" />
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px; font-family: sans-serif;">
+      <h1>🥷 Zero-Outbound Kroki</h1>
+      
+      {error() && (
+        <div style="background: #ffebee; color: #c62828; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+          {error()}
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button class="counter" onClick={() => setCount((count) => count + 1)}>
-          Count is {count()}
-        </button>
-      </section>
+      )}
 
-      <div class="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg class="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img class="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://solidjs.com/" target="_blank">
-                <img class="button-icon" src={solidLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {diagramSource() && (
+        <div style="margin-bottom: 20px;">
+          <h3 style="margin-bottom: 5px;">Entpackter Quelltext:</h3>
+          <pre style="background: #f4f6f8; padding: 15px; border-radius: 6px; overflow-x: auto;">
+            {diagramSource()}
+          </pre>
         </div>
-        <div id="social">
-          <svg class="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg class="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div class="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <div style="border: 2px dashed #ccc; border-radius: 6px; padding: 20px; min-height: 200px; background: #fff;">
+         <div ref={containerRef}></div>
+         {!diagramSource() && !error() && (
+           <p style="color: #666; text-align: center; margin-top: 80px;">
+             Hänge einen Kroki-Hash an die URL an, um ein Diagramm zu sehen.
+           </p>
+         )}
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

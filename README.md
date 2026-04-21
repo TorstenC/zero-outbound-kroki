@@ -35,5 +35,5 @@ npm install
 npm run dev
 
 # Projekt für die Produktion bauen (Static Files)
-npm run buil
+npm run build
 ```
