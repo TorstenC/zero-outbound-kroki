@@ -1,39 +1,31 @@
 # 🥷 Zero-Outbound Kroki
 
-Ein rein clientseitiger, serverloser Viewer für Diagramme (kompatibel mit dem [Kroki](https://kroki.io/)-URL-Format).
+Ein rein clientseitiger, serverloser Viewer für Diagramme und Bilder.
 
 ## 🎯 Warum dieses Projekt?
 
-In Unternehmensumgebungen stellen webbasierte Diagramm-Tools oft ein Sicherheitsrisiko dar ("IP-Leakage"), wenn interne Architektur- oder Prozessdiagramme an externe Server (wie `kroki.io` oder PlantUML-Server) gesendet werden, um dort gerendert zu werden.
+In Konzernumgebungen ist "IP-Leakage" ein echtes Risiko. Interne Architekturdiagramme sollten niemals externe Rendering-Server sehen.
 
-**Zero-Outbound Kroki löst dieses Problem:**
+**Zero-Outbound Kroki löst das:**
 
-* **100% Client-Side:** Alles passiert in deinem Browser. Es gibt keine ausgehenden HTTP-Requests an Rendering-Server.
-* **Kroki-Kompatibilität:** Es nutzt denselben komprimierten Base64-Payload wie Kroki, liest diesen aber aus dem URL-Hash (`#`).
-* **Sicher teilbar:** Da der Code komplett im Hash (`#...`) der URL liegt, wird der Diagramm-Code beim Aufrufen der Seite nicht einmal an den Server (z.B. GitHub Pages) übertragen.
+* **100% Client-Side:** Kein Rendering-Server, kein Backend.
+* **Verschwiegen:** Da alles im URL-Hash (`#`) stattfindet, sieht selbst der Webserver (GitHub Pages) nicht, was du dir ansiehst (Hashes werden nicht an den Server gesendet).
 
-## 🏗️ Architektur
+## 🏗️ Unterstützte URL-Schemata
 
-Die URL-Struktur orientiert sich an Kroki, verlagert den Payload aber in den Hash:
-`https://<domain>/#/<engine>/<format>/<base64-payload>`
+### A. Kroki-Modus (Diagramme)
 
-Das Tool liest den Hash, entpackt ihn (Base64 Decode -> Zlib Inflate via `pako`) und übergibt den Klartext an die lokale, im Browser laufende Diagramm-Engine (z.B. Mermaid.js).
+Nutzt den komprimierten Kroki-Standard:
+`/#/{engine}/{format}/{base64-payload}`
+*Beispiel:* `/#/mermaid/svg/eNpLyslPzub6MH_p9setSwArgwcN`
 
-## 🚀 Technologie-Stack
+### B. Direct-Image-Modus (Bilder/Snapshots)
 
-* **Build-Tool:** [Vite](https://vitejs.dev/)
-* **UI-Framework:** [SolidJS](https://www.solidjs.com/) (Extrem leichtgewichtig, kein Virtual DOM)
-* **Kompression:** `pako` (Zlib port)
+Zeigt Base64-kodierte Bilder direkt an:
+`/#data:image/{png|jpg|webp};base64,{payload}`
+*Vorteil:* Perfekt, um sensible Screenshots sicher über einen Link zu teilen, ohne sie hochzuladen.
 
-## 🛠️ Lokale Entwicklung
+## 🛠️ Technologie
 
-```bash
-# Abhängigkeiten installieren
-npm install
-
-# Entwicklungsserver mit Hot-Module-Replacement starten
-npm run dev
-
-# Projekt für die Produktion bauen (Static Files)
-npm run build
-```
+* **Nāgārjuna-Engine:** „Leere ist das Fundament aller Dinge“ (Die App ist initial leer und baut sich aus dem Hash auf).
+* **SolidJS & Vite:** Für maximale Performance und minimale Größe.

@@ -15,5 +15,7 @@ export default defineConfig({
     outDir: 'docs',
     // Stellt sicher, dass der Ordner vor dem Build geleert wird
     emptyOutDir: true,
+    // Warnung erst ab 1.5 MB, siehe `/issues/1`
+    chunkSizeWarningLimit: 1500,
   },
 });
